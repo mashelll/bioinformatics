@@ -1,0 +1,162 @@
+class GraphNode:
+
+	def __init__(self, data, next=None, prev=None):
+
+		self.data = data
+		self.visited = False
+		if (next):
+			self.next = next
+		else:
+			self.next = []
+
+		if (prev):
+			self.prev = prev
+		else:
+			self.prev = []
+
+    
+	def degree(self):
+		return len(self.prev) + len(self.next)
+
+    
+	def indegree(self):
+		return len(self.prev)
+
+    
+	def outdegree(self):
+		return len(self.next)
+
+            
+
+def createGraph(patterns, k):
+
+	graph = []
+
+	for pattern in patterns:
+		start_data = pattern[:k - 1]
+		finish_data = pattern[1:]
+
+		start = None
+		finish = None
+
+		for node in graph:
+			if node.data == start_data:
+				start = node
+			if node.data == finish_data:
+				finish = node
+                
+		if (finish is None):
+			finish = GraphNode(finish_data)
+			graph.append(finish)
+
+		if (finish_data == start_data):
+			start = finish
+                
+		if (start is None):
+			start = GraphNode(start_data)
+			graph.append(start)
+            
+		start.next.append(finish)
+		finish.prev.append(start)
+
+	return graph
+    
+    
+def createEulerPath(graph, k, d):
+
+	EulerPath = []
+
+	while (True):
+		for node in graph:
+			if node.degree() > 0:
+				new_start_node = node
+				break
+			else:
+				new_start_node = None
+				break
+
+		if (new_start_node is None):
+			break
+        
+		if (EulerPath):
+ 			path = generatePath(graph, new_start_node)
+		else:
+			for node in graph:
+				if node.outdegree() == node.indegree() + 1:
+					new_start_node = node
+			path = generatePath(graph, new_start_node)
+
+		EulerPath = insertPath(path, EulerPath)
+
+	return concatenatePath(path, k, d)
+
+
+
+def insertPath(path, EulerPath):
+
+	if (not EulerPath):
+		return path
+
+	for counter in range(len(EulerPath)):
+		if (EulerPath[counter].data == path[0].data):
+			EulerPath.pop(counter)
+			EulerPath[counter:counter] = path
+			return EulerPath
+    
+    
+
+def generatePath(graph, start_node):
+
+	current_node = start_node
+	path = []
+	path.append(current_node)
+
+	while (current_node.outdegree() != 0):
+		next_node = current_node.next.pop(0)
+		next_node.prev.remove(current_node)
+		current_node = next_node
+		path.append(current_node)
+
+	return path
+     
+        
+
+def concatenatePath(path, k, d):
+
+    concatenated_path = "".join([elem[0] for elem in path[0].data[:-1]])
+
+    for node in path:
+        concatenated_path += node.data[-1][0]
+        
+    for node in path[-k - d:]:
+        concatenated_path += node.data[-1][-1]
+    return concatenated_path
+
+
+        
+def splitPair(pattern):
+	first, second = pattern.strip().split("|")
+	pair = []
+	for i in range(len(first)):
+		pair.append((first[i], second[i]))
+	return pair
+    
+    
+
+def main():
+
+	with open('/home/masha/Загрузки/rosalind_ba3j.txt', 'r') as f: 
+		k, d = [int(val) for val in f.readline().split()]
+		Text = []
+		for line in f.readlines():
+			Text.append(splitPair(line))    
+
+	graph = createGraph(Text, k)
+	EulerPath = createEulerPath(graph, k, d)
+
+	with open('/home/masha/Загрузки/output.txt', 'w') as f: 
+    		f.write(EulerPath)
+
+if __name__ == "__main__":
+	main()
+
